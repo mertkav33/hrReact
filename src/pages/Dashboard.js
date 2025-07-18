@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { useMemo } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import {
   Container,
@@ -23,9 +26,8 @@ import {
   Toolbar,
   TablePagination,
   TableSortLabel,
-  Grid,
-  Card,
-  CardContent,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 
 const Dashboard = () => {
@@ -37,41 +39,6 @@ const Dashboard = () => {
   });
 
   const [employees, setEmployees] = useState([]);
-
-  const totalEmployees = employees.length;
-
-  const averageSalary = employees.length
-    ? Math.round(
-        employees.reduce((sum, emp) => sum + Number(emp.salary), 0) /
-          employees.length
-      )
-    : 0;
-
-  const departments = [...new Set(employees.map((emp) => emp.department))];
-  const departmentCount = departments.length;
-
-  const departmentCounts = employees.reduce((acc, emp) => {
-    acc[emp.department] = (acc[emp.department] || 0) + 1;
-    return acc;
-  }, {});
-
-  const mostCrowdedDept =
-    Object.keys(departmentCounts).length > 0
-      ? Object.entries(departmentCounts).sort((a, b) => b[1] - a[1])[0][0]
-      : "Veri yok";
-
-  const totalSalary = employees.reduce(
-    (sum, emp) => sum + Number(emp.salary),
-    0
-  );
-
-  const minSalary = employees.length
-    ? Math.min(...employees.map((emp) => Number(emp.salary)))
-    : 0;
-
-  const maxSalary = employees.length
-    ? Math.max(...employees.map((emp) => Number(emp.salary)))
-    : 0;
 
   const navigate = useNavigate();
 
@@ -163,16 +130,6 @@ const Dashboard = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleLogout = () => {
-    signOut(auth)
-      .then(() => {
-        navigate("/"); // login sayfasına döner
-      })
-      .catch((error) => {
-        console.error("Çıkış hatası:", error);
-      });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -196,9 +153,6 @@ const Dashboard = () => {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Dashboard - Çalışan Yönetimi
           </Typography>
-          <Button variant="outlined" color="error" onClick={handleLogout}>
-            Log Out
-          </Button>
         </Toolbar>
       </AppBar>
 
@@ -208,7 +162,7 @@ const Dashboard = () => {
         gap={2}
         alignItems="center"
         justifyContent="flex-start"
-        sx={{ my: 2 }}
+        sx={{ my: 3 }}
       >
         <TextField
           label="İsim"
@@ -218,6 +172,7 @@ const Dashboard = () => {
           onChange={(e) =>
             setSearchQuery({ ...searchQuery, name: e.target.value })
           }
+          sx={{ width: 160 }}
         />
         <TextField
           label="Pozisyon"
@@ -227,6 +182,7 @@ const Dashboard = () => {
           onChange={(e) =>
             setSearchQuery({ ...searchQuery, position: e.target.value })
           }
+          sx={{ width: 160 }}
         />
         <TextField
           label="Departman"
@@ -236,6 +192,7 @@ const Dashboard = () => {
           onChange={(e) =>
             setSearchQuery({ ...searchQuery, department: e.target.value })
           }
+          sx={{ width: 160 }}
         />
         <TextField
           label="Maaş"
@@ -245,22 +202,33 @@ const Dashboard = () => {
           onChange={(e) =>
             setSearchQuery({ ...searchQuery, salary: e.target.value })
           }
+          sx={{ width: 120 }}
         />
         <Button
           variant="contained"
           color="primary"
-          size="medium"
+          startIcon={<SearchIcon />}
           onClick={handleSearch}
+          sx={{
+            height: 40,
+            width: 120,
+            mt: { xs: 2, sm: 0 }, // responsive yukarı hizalama
+          }}
         >
-          ARA
+          Ara
         </Button>
       </Box>
+
       <TableContainer component={Paper} sx={{ mt: 3 }}>
         <Table>
-          <TableHead>
+          <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
             <TableRow>
               {["name", "position", "department", "salary"].map((col) => (
-                <TableCell key={col}>
+                <TableCell
+                  key={col}
+                  align={col === "salary" ? "right" : "left"}
+                  sx={col === "salary" ? { pr: 4 } : {}}
+                >
                   <TableSortLabel
                     active={orderBy === col}
                     direction={orderBy === col ? order : "asc"}
@@ -283,39 +251,52 @@ const Dashboard = () => {
               </TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
             {sortedEmployees
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((emp) => (
-                <TableRow key={emp._id} hover>
+              .map((emp, index) => (
+                <TableRow
+                  key={emp._id}
+                  hover
+                  sx={{
+                    backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
+                    "&:hover": { backgroundColor: "#f0f4ff" },
+                  }}
+                >
                   <TableCell>{emp.name}</TableCell>
                   <TableCell>{emp.position}</TableCell>
                   <TableCell>{emp.department}</TableCell>
-                  <TableCell>{emp.salary}</TableCell>
+                  <TableCell align="right">
+                    {emp.salary.toLocaleString()} ₺
+                  </TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      <Button
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        onClick={() => handleEdit(emp)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(emp._id)}
-                      >
-                        Delete
-                      </Button>
+                      <Tooltip title="Düzenle">
+                        <IconButton
+                          color="primary"
+                          size="small"
+                          onClick={() => handleEdit(emp)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Sil">
+                        <IconButton
+                          color="error"
+                          size="small"
+                          onClick={() => handleDelete(emp._id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
                     </Stack>
                   </TableCell>
                 </TableRow>
               ))}
           </TableBody>
         </Table>
+
         <TablePagination
           component="div"
           count={filteredEmployees.length}
@@ -324,76 +305,12 @@ const Dashboard = () => {
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={[5, 10, 15]}
+          labelRowsPerPage="Sayfa başına kayıt:"
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}–${to} arası / toplam ${count}`
+          }
         />
       </TableContainer>
-      <Box sx={{ mt: 3, mb: 4 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle2">Toplam Çalışan</Typography>
-                <Typography variant="h5">{totalEmployees}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle2">Ortalama Maaş</Typography>
-                <Typography variant="h5">{averageSalary} ₺</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle2">Departman Sayısı</Typography>
-                <Typography variant="h5">{departmentCount}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle2">En Yüksek Maaş</Typography>
-                <Typography variant="h5">{maxSalary} ₺</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle2">
-                  En Kalabalık Departman
-                </Typography>
-                <Typography variant="h5">{mostCrowdedDept}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle2">Toplam Maaş Ödemesi</Typography>
-                <Typography variant="h5">{totalSalary} ₺</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle2">En Düşük Maaş</Typography>
-                <Typography variant="h5">{minSalary} ₺</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
     </Container>
   );
 };
