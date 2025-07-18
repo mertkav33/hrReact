@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase/firebaseConfig";
+
 import { useMemo } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
@@ -304,7 +303,7 @@ const Dashboard = () => {
           onPageChange={handleChangePage}
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 15]}
+          rowsPerPageOptions={[5, 10, 20]}
           labelRowsPerPage="Sayfa başına kayıt:"
           labelDisplayedRows={({ from, to, count }) =>
             `${from}–${to} arası / toplam ${count}`
