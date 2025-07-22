@@ -104,12 +104,12 @@ const Layout = () => {
   </div>
 </Drawer>
 
-      {/* İÇERİK */}
+      
       <Box
         component="main"
         sx={{ flexGrow: 1, bgcolor: "#f9f9f9", p: 3, minHeight: "100vh" }}
       >
-        <Toolbar /> {/* üst bar boşluğu kadar yer açar */}
+        <Toolbar /> 
         <Outlet />
       </Box>
     </Box>

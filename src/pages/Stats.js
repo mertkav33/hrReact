@@ -39,7 +39,10 @@ const Stats = () => {
   const averageSalary = totalEmployees
     ? Math.round(totalSalary / totalEmployees)
     : 0;
-  const departmentCount = new Set(employees.map((emp) => emp.department)).size;
+  const departmentNames = employees.map(
+    (emp) => emp.department?.name || emp.department
+  );
+  const departmentCount = new Set(departmentNames).size;
   const minSalary = employees.length
     ? Math.min(...employees.map((emp) => Number(emp.salary)))
     : 0;
@@ -47,10 +50,52 @@ const Stats = () => {
     ? Math.max(...employees.map((emp) => Number(emp.salary)))
     : 0;
 
+  // 📊 Departman bazlı çalışan sayısı
   const departmentCounts = employees.reduce((acc, emp) => {
-    acc[emp.department] = (acc[emp.department] || 0) + 1;
+    const deptName = emp.department?.name || emp.department;
+    acc[deptName] = (acc[deptName] || 0) + 1;
     return acc;
   }, {});
+
+  const deptEmployeeData = Object.entries(departmentCounts).map(
+    ([dept, count]) => ({
+      name: dept,
+      value: count,
+    })
+  );
+
+  // 📊 Departmanlara göre toplam maaş
+  const deptSalaryData = Object.entries(departmentCounts).map(([dept]) => {
+    const deptEmps = employees.filter(
+      (emp) => (emp.department?.name || emp.department) === dept
+    );
+    const totalDeptSalary = deptEmps.reduce(
+      (sum, emp) => sum + Number(emp.salary),
+      0
+    );
+    return {
+      name: dept,
+      value: totalDeptSalary,
+    };
+  });
+
+  // 📊 Maaş aralığına göre çalışan sayısı
+  const salaryRangeData = [
+    { range: "0-10K", count: employees.filter((e) => e.salary < 10000).length },
+    {
+      range: "10K-25K",
+      count: employees.filter((e) => e.salary >= 10000 && e.salary < 25000)
+        .length,
+    },
+    {
+      range: "25K-50K",
+      count: employees.filter((e) => e.salary >= 25000 && e.salary < 50000)
+        .length,
+    },
+    { range: "50K+", count: employees.filter((e) => e.salary >= 50000).length },
+  ];
+
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
 
   const stats = [
     { title: "Toplam Çalışan", value: totalEmployees, color: "#1976d2" },
@@ -76,42 +121,6 @@ const Stats = () => {
       color: "#00897b",
     },
   ];
-
-  const deptEmployeeData = Object.entries(departmentCounts).map(
-    ([dept, count]) => ({
-      name: dept,
-      value: count,
-    })
-  );
-
-  const deptSalaryData = Object.entries(departmentCounts).map(([dept]) => {
-    const deptEmps = employees.filter((emp) => emp.department === dept);
-    const totalDeptSalary = deptEmps.reduce(
-      (sum, emp) => sum + Number(emp.salary),
-      0
-    );
-    return {
-      name: dept,
-      value: totalDeptSalary,
-    };
-  });
-
-  const salaryRangeData = [
-    { range: "0-10K", count: employees.filter((e) => e.salary < 10000).length },
-    {
-      range: "10K-25K",
-      count: employees.filter((e) => e.salary >= 10000 && e.salary < 25000)
-        .length,
-    },
-    {
-      range: "25K-50K",
-      count: employees.filter((e) => e.salary >= 25000 && e.salary < 50000)
-        .length,
-    },
-    { range: "50K+", count: employees.filter((e) => e.salary >= 50000).length },
-  ];
-
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
 
   return (
     <Box>
@@ -153,11 +162,7 @@ const Stats = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={deptEmployeeData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="name"
-                    interval={0} // tüm label'ları zorla göster
-                    tick={{ fontSize: 12 }}
-                  />
+                  <XAxis dataKey="name" interval={0} tick={{ fontSize: 12 }} />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="value" fill="#1976d2" />

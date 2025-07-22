@@ -10,6 +10,9 @@ import {
   Stack,
 } from "@mui/material";
 
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
+
 const EmployeeDetail = () => {
   const { id } = useParams();
   const [employee, setEmployee] = useState(null);
@@ -23,24 +26,27 @@ const EmployeeDetail = () => {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/employees/${id}`
-        );
-        setEmployee(res.data);
-        setForm({
-          name: res.data.name,
-          position: res.data.position,
-          department: res.data.department,
-          salary: res.data.salary,
-        });
+        const ref = doc(db, "employees", id);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          setEmployee(data);
+          setForm({
+            name: data.name,
+            position: data.position?.$oid || data.position,
+            department: data.department?.$oid || data.department,
+            salary: data.salary,
+          });
+        } else {
+          console.error("Belge bulunamadı.");
+        }
       } catch (err) {
-        console.error("detay alınamadı: ", err);
+        console.error("Firebase'den detay alınamadı: ", err);
       }
     };
 
     fetchEmployee();
   }, [id]);
-
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };

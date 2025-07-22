@@ -1,6 +1,6 @@
-// src/firebase/firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore"; // ✅ Firestore import
 
 const firebaseConfig = {
   apiKey: "AIzaSyDxfm1_kKHE2iEtbWzCm5ZdiLlpLP-UQ94",
@@ -12,8 +12,7 @@ const firebaseConfig = {
   measurementId: "G-DSLKFK281F",
 };
 
-// Firebase'i başlat
 const app = initializeApp(firebaseConfig);
 
-// 🔥 Buradaki auth objesini dışa aktar
 export const auth = getAuth(app);
+export const db = getFirestore(app); // ✅ Burası eksikti
